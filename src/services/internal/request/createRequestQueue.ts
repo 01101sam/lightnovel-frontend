@@ -8,7 +8,7 @@ import { RateLimitQueue } from 'src/utils/rateLimitQueue'
  * 考虑到浏览器的计时不稳定等可能性，这里将相关数值缩放一次，避免意外
  */
 export function createRequestQueue() {
-  return new RateLimitQueue(10 - 1, 5 * 1000 * 1.1)
+  return new RateLimitQueue(10 - 1)
   // return new RateLimitQueue(1, 5 * 1000)
 }
 
