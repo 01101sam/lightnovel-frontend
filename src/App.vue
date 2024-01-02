@@ -16,6 +16,7 @@ import { useAppStore } from 'stores/app'
 import { longTermToken } from 'src/utils/session'
 import { getMyInfo } from 'src/services/user'
 import { NOOP } from 'src/const/empty'
+import { useRouter } from 'vue-router'
 
 const $q = useQuasar()
 $q.loadingBar.setDefaults({
@@ -25,17 +26,19 @@ $q.loadingBar.setDefaults({
 })
 
 const appStore = useAppStore()
+const router = useRouter()
 const settingStore = useSettingStore()
 settingStore.init()
 
 useServerNotify('OnMessage', (message: string) => {
-  $q.notify({
-    position: 'top',
-    html: true,
-    message: sanitizerHtml(message),
-    timeout: 2500,
-    actions: [{ label: '关闭', color: 'white', handler: NOOP }]
-  })
+  if (router.currentRoute.value.name !== 'Read')
+    $q.notify({
+      position: 'top',
+      html: true,
+      message: sanitizerHtml(message),
+      timeout: 2500,
+      actions: [{ label: '关闭', color: 'white', handler: NOOP }]
+    })
 })
 
 useServerNotify('OnError', (message: string) => {
