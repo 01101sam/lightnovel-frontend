@@ -4,6 +4,7 @@
     elevated
     :class="($q.dark.isActive ? 'bg-blue-grey-10' : '') + ' q-py-xs'"
     :height-hint="headerHeight"
+    v-if="readSetting['hideToolbarWhenFullScreen'] ? !$q.fullscreen.isActive : true"
   >
     <q-toolbar>
       <q-btn flat dense round aria-label="Menu" :icon="icon.mdiMenu" @click="siderShow = !siderShow" />
@@ -62,6 +63,7 @@
             anchor="bottom left"
             self="top right"
             style="border-radius: 8px"
+            v-model="userMenu"
           >
             <q-list class="avatar-panel-popover" v-if="user">
               <div class="nickname-item text-center">
@@ -185,6 +187,7 @@ import { useQuasar } from 'quasar'
 import { rebootSignalr } from 'src/services/internal/request'
 import { useRoute, useRouter } from 'vue-router'
 import SearchInput from '../SearchInput.vue'
+import { useSettingStore } from 'stores/setting'
 
 const route = useRoute()
 
@@ -192,10 +195,13 @@ const hideSearchBar = computed(() => route.meta.hideSearchBar)
 
 const $q = useQuasar()
 const appStore = useAppStore()
+const settingStore = useSettingStore()
 const layout = useLayout()
 const { appName, user } = storeToRefs(appStore)
+const userMenu = ref(null)
 const { siderShow, headerHeight, siderBreakpoint } = layout
 const searchKey = ref('')
+const { readSetting } = settingStore
 const reveal = useMedia(
   computed(() => `(max-width: ${siderBreakpoint.value}px)`),
   window.innerWidth <= siderBreakpoint.value
@@ -231,10 +237,16 @@ const userInfoMenuOptions: Array<Record<string, any>> = [
     icon: icon.mdiFolderHeartOutline
   },
   {
-    label: '网站设置',
+    label: '应用设置',
     key: 'Setting',
     route: 'Setting',
     icon: icon.mdiCog
+  },
+  {
+    label: '浏览器支持度测试',
+    key: 'Test',
+    route: 'Test',
+    icon: icon.mdiHelpCircle
   }
 ]
 
@@ -245,18 +257,12 @@ function onSearch(keyWords: string, exact: boolean) {
 function changAppName() {
   appStore.asyncReverse()
 }
-function logout() {
-  $q.dialog({
-    title: '提示',
-    message: '你确定要退出登录吗？',
-    cancel: true,
-    persistent: true
-  }).onOk(async () => {
-    appStore.$reset()
-    await longTermToken.set('')
-    sessionToken.set('')
-    await rebootSignalr()
-  })
+async function logout() {
+  userMenu.value = false
+  appStore.$reset()
+  await longTermToken.set('')
+  sessionToken.set('')
+  await rebootSignalr()
 }
 
 // 侧边栏问题

@@ -22,7 +22,12 @@ export const useSettingStore = defineStore('app.setting', {
       justify: false,
       showButton: true,
       tapToScroll: false,
-      hideFullScreen: false
+      hideFullScreen: false,
+      hideFloatingButton: 'never' as 'never' | 'fullscreen' | 'always',
+      hideFloatingButtonSelectable: false,
+      hideToolbarWhenFullScreen: false,
+      fullScreenWhenReading: false,
+      hideSettingDialog: false
     },
     editorSetting: {
       mode: 'html' as 'html' | 'markdown'

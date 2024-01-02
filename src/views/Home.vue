@@ -26,35 +26,6 @@
             </q-grid>
           </q-card-section>
         </q-card>
-
-        <q-card class="online" style="margin-top: 12px">
-          <q-card-section>
-            <div class="title text-h6">网站统计</div>
-          </q-card-section>
-          <div v-if="loading" class="row flex-center" style="height: 70px; padding-top: 0">
-            <q-spinner-dots color="primary" size="40px" />
-          </div>
-          <q-card-section v-else style="padding-top: 0">
-            <div class="content row full-width">
-              <div class="col-3">
-                <div class="text-opacity">当前在线</div>
-                <div class="text-h6">{{ onlineInfo.OnlineCount }}</div>
-              </div>
-              <div class="col-3">
-                <div class="text-opacity">今日总数</div>
-                <div class="text-h6">{{ onlineInfo.DayCount }}</div>
-              </div>
-              <div class="col-3">
-                <div class="text-opacity">今日注册</div>
-                <div class="text-h6">{{ onlineInfo.DayRegister }}</div>
-              </div>
-              <div class="col-3">
-                <div class="text-opacity">最高在线</div>
-                <div class="text-h6">{{ onlineInfo.MaxOnline }}</div>
-              </div>
-            </div>
-          </q-card-section>
-        </q-card>
       </q-grid-item>
 
       <q-grid-item>
@@ -92,77 +63,36 @@
             </q-card>
           </q-grid-item>
 
-          <q-grid-item>
-            <q-card>
-              <q-card-section>
-                <div class="row flex-center">
-                  <div class="text-h6">更新日志</div>
-                  <q-space />
-                  <div class="text-subtitle2">更多</div>
-                </div>
-              </q-card-section>
-
-              <q-separator />
-
-              <q-list separator>
-                <q-item clickable v-ripple>
-                  <q-item-section>日志1</q-item-section>
-                </q-item>
-                <q-item clickable v-ripple>
-                  <q-item-section> 日志2 </q-item-section>
-                </q-item>
-              </q-list>
-            </q-card>
-          </q-grid-item>
-
-          <q-grid-item>
-            <q-card>
-              <q-card-section>
-                <div class="row flex-center">
-                  <div class="text-h6">友情链接</div>
-                  <q-space />
-                </div>
-              </q-card-section>
-
-              <q-separator />
-              <q-card-section>
-                <p>如有意向交换站点链接，请联系&nbsp;<a href="mailto:admin@acgdmzy.com">admin@acgdmzy.com</a></p>
-              </q-card-section>
-            </q-card>
-          </q-grid-item>
-
-          <q-grid-item>
-            <q-card>
-              <q-card-section>
-                <div class="row flex-center">
-                  <div class="text-h6">处刑列表</div>
-                  <q-space />
-                </div>
-              </q-card-section>
-
-              <q-separator />
-              <q-card-section>
-                <div v-if="loading" class="row flex-center">
-                  <q-spinner-dots color="primary" size="40px" />
-                </div>
-                <div v-else>
-                  <q-avatar
-                    class="cursor-pointer"
-                    v-for="ban in banList"
-                    :key="ban.Id"
-                    size="32px"
-                    @click="showImage(ban.Images)"
-                  >
-                    <img :src="ban.Avatar" alt="avatar" />
-                    <q-tooltip class="ban-tooltip">
-                      {{ ban.Description }}
-                    </q-tooltip>
-                  </q-avatar>
-                </div>
-              </q-card-section>
-            </q-card>
-          </q-grid-item>
         </q-grid>
+
+        <q-card class="online" style="margin-top: 12px">
+          <q-card-section>
+            <div class="title text-h6">网站统计</div>
+          </q-card-section>
+          <div v-if="loading" class="row flex-center" style="height: 70px; padding-top: 0">
+            <q-spinner-dots color="primary" size="40px" />
+          </div>
+          <q-card-section v-else style="padding-top: 0">
+            <div class="content row full-width">
+              <div class="col-3">
+                <div class="text-opacity">当前在线</div>
+                <div class="text-h6">{{ onlineInfo.OnlineCount }}</div>
+              </div>
+              <div class="col-3">
+                <div class="text-opacity">今日总数</div>
+                <div class="text-h6">{{ onlineInfo.DayCount }}</div>
+              </div>
+              <div class="col-3">
+                <div class="text-opacity">今日注册</div>
+                <div class="text-h6">{{ onlineInfo.DayRegister }}</div>
+              </div>
+              <div class="col-3">
+                <div class="text-opacity">最高在线</div>
+                <div class="text-h6">{{ onlineInfo.MaxOnline }}</div>
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
       </q-grid-item>
     </q-grid>
     <div ref="viewerRef" v-viewer="{ navbar: true, rebuild: true }" v-show="false">
@@ -194,14 +124,13 @@ const settingStore = useSettingStore()
 const getInfo = useTimeoutFn(async () => {
   // 这样可以使Signalr在一个ws消息中并发调用
   let p1 = getOnlineInfo().then((res) => (onlineInfo.value = res))
-  let p2 = getAnnouncementList({ Page: 1, Size: 5 }).then(
+  let p2 = getAnnouncementList({ Page: 1, Size: 10 }).then(
     (res) => (announcementList.value = announcementListFormat(res.Data))
   )
   let p3 = getLatestBookList().then((res) => (bookData.value = res.Data))
-  let p4 = getBanInfoList().then((res: any[]) => (banList.value = res))
-  await Promise.all([p1, p2, p3, p4])
+  await Promise.all([p1, p2, p3])
 })
-const loading = computed(() => getInfo.loading.value || !(onlineInfo.value || announcementList.value || banList.value))
+const loading = computed(() => getInfo.loading.value || !(onlineInfo.value || announcementList.value))
 
 const showImage = (img) => {
   banImages.value = img

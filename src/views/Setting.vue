@@ -45,15 +45,18 @@
             <div class="q-pa-md">
               <div class="q-gutter-xs bg-radio">
                 <div class="text-subtitle1">阅读背景</div>
-                <q-radio v-model="readSetting.bgType" val="none" label="无" />
-                <q-radio v-model="readSetting.bgType" val="paper" label="纸质" />
-                <q-radio v-model="readSetting.bgType" val="custom" label="自定义颜色" />
+                <q-radio @mousedown="onPreview" @touchstart="onPreview"
+                         v-model="readSetting.bgType" val="none" label="无" />
+                <q-radio @mousedown="onPreview" @touchstart="onPreview"
+                         v-model="readSetting.bgType" val="paper" label="纸质" />
+                <q-radio @mousedown="onPreview" @touchstart="onPreview"
+                         v-model="readSetting.bgType" val="custom" label="自定义颜色" />
               </div>
               <q-color
                 style="max-width: 200px"
                 v-if="readSetting.bgType === 'custom'"
                 v-model="readSetting.customColor"
-                class="my-picker q-mt-md"
+                class="my-picker q-mt-md q-mb-sm"
               />
               <q-separator />
               <div class="q-gutter-xs q-mt-md">
@@ -65,28 +68,44 @@
               <q-separator />
               <div class="q-gutter-xs q-mt-md">
                 <div class="text-subtitle1">其他选项</div>
-                <q-toggle v-model="readSetting.justify" label="两端对齐" />
-                <q-toggle
-                  v-model="readSetting.showButton"
-                  :label="readSetting.showButton ? '显示底部按钮' : '隐藏底部按钮'"
-                />
+                <q-toggle v-model="readSetting.justify" label="两端对齐 (没做)" disable />
+                <q-toggle v-model="readSetting.showButton" label="显示底部按钮" />
                 <q-toggle v-model="readSetting.tapToScroll" label="点击边缘滚动页面" />
+                <q-toggle v-model="readSetting.hideSettingDialog" label="隐藏设置按钮" />
+              </div>
+              <q-separator />
+              <div class="q-gutter-xs light-radio q-mt-md q-mb-sm">
+                <div class="text-subtitle1">浮动按钮</div>
+                <q-toggle v-model="readSetting.hideFloatingButtonSelectable" label="显示隐藏浮动菜单按钮" />
                 <q-toggle v-model="readSetting.hideFullScreen" label="隐藏全屏按钮" />
+                <div class="text-subtitle2">隐藏偏好</div>
+                <q-select emit-value map-options filled v-model="readSetting.hideFloatingButton"
+                          :options="floatingBtnHideOpts" class="my-picker" />
+              </div>
+              <q-separator />
+              <div class="q-gutter-xs q-mt-md">
+                <div class="text-subtitle1">全屏</div>
+                <q-toggle v-model="readSetting.hideToolbarWhenFullScreen" label="全屏时隐藏工具栏" />
+                <q-toggle v-model="readSetting.fullScreenWhenReading" label="阅读时自动全屏" />
               </div>
               <q-separator />
               <div class="q-gutter-xs q-mt-md">
                 <div class="text-subtitle1">字体大小</div>
-                <q-slider label v-model="readSetting.fontSize" :min="12" :max="30" />
+                <q-slider @pan="onPreview" label v-model="readSetting.fontSize" :min="12" :max="30" />
               </div>
               <q-separator />
               <div class="q-gutter-xs q-mt-md">
                 <div class="text-subtitle1">
                   阅读页宽度{{ readSetting.widthType === 'custom' ? '（设为 0 时为全屏，只在大屏幕下生效）' : '' }}
                 </div>
-                <q-radio v-model="readSetting.widthType" val="full" label="全屏" />
-                <q-radio v-model="readSetting.widthType" val="medium" label="中" />
-                <q-radio v-model="readSetting.widthType" val="small" label="小" />
-                <q-radio v-model="readSetting.widthType" val="custom" label="自定义" />
+                <q-radio @mousedown="onPreview" @touchstart="onPreview"
+                         v-model="readSetting.widthType" val="full" label="全屏" />
+                <q-radio @mousedown="onPreview" @touchstart="onPreview"
+                         v-model="readSetting.widthType" val="medium" label="中" />
+                <q-radio @mousedown="onPreview" @touchstart="onPreview"
+                         v-model="readSetting.widthType" val="small" label="小" />
+                <q-radio @mousedown="onPreview" @touchstart="onPreview"
+                         v-model="readSetting.widthType" val="custom" label="自定义" />
                 <div style="max-width: 150px">
                   <q-input
                     v-model="readSetting.readPageWidth"
@@ -127,13 +146,23 @@
 </template>
 
 <script lang="ts" setup>
-import { watch, ref } from 'vue'
+import { ref, watch } from 'vue'
 import { icon } from 'assets/icon'
 import { Dark } from 'quasar'
 import { useSettingStore } from 'stores/setting'
 import { storeToRefs } from 'pinia'
 import { apiServer, apiServerOptions } from 'src/services/apiServer'
 import { switchSignalr } from 'src/services/internal/request/signalr'
+import { useRouter } from 'vue-router'
+
+const props = defineProps<{
+  tab?: string
+  preview?: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:preview', value: boolean): void
+}>()
 
 const tabOptions: Array<Record<string, any>> = [
   {
@@ -156,11 +185,48 @@ const tabOptions: Array<Record<string, any>> = [
   }
 ]
 
+const floatingBtnHideOpts: Array<Record<string, any>> = [
+  {
+    label: '关闭',
+    value: 'never'
+  },
+  {
+    label: '全屏',
+    value: 'fullscreen'
+  },
+  {
+    label: '一直',
+    value: 'always'
+  }
+]
+
 const settingStore = useSettingStore()
+const router = useRouter()
+
 const { dark } = storeToRefs(settingStore)
 const { readSetting, generalSetting, editorSetting } = settingStore
 
-let tab = ref('Setting')
+const tab = ref(props.tab || 'Setting')
+const preview = ref(false)
+
+function onPreview(phase?: string) {
+  console.debug('onPreview', phase)
+  if (typeof phase === 'string') {  // slider
+    phase === 'end' ? offPreview() : emit('update:preview', true)
+  } else {
+    emit('update:preview', true)
+    document.addEventListener('mouseup', offPreview, { once: true })
+    document.addEventListener('touchend', offPreview, { once: true })
+  }
+}
+
+function offPreview() {
+  emit('update:preview', false)
+  console.debug('offPreview')
+  document.removeEventListener('mouseup', offPreview)
+  document.removeEventListener('touchend', offPreview)
+  document.removeEventListener('pan', offPreview)
+}
 
 watch(dark, (newDark) => {
   Dark.set(newDark)

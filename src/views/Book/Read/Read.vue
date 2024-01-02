@@ -40,7 +40,27 @@
       </div>
     </div>
 
-    <drag-page-sticky v-slot="{ isDragging }">
+    <q-dialog v-model="settingDialog" :maximized="true" :style="{ opacity: preview ? 0.3 : 1 }">
+      <q-card>
+        <q-bar>
+          <q-space />
+
+          <q-btn dense flat :icon="icon.mdiClose" v-close-popup>
+            <q-tooltip class="bg-white text-primary">关闭</q-tooltip>
+          </q-btn>
+        </q-bar>
+
+        <q-card-section>
+          <setting tab="Read" v-model:preview="preview" />
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <drag-page-sticky
+      v-slot="{ isDragging }"
+      v-if="floatingButtonVisible"
+      v-show="readSetting['hideFloatingButton'] === 'fullscreen' ? !$q.fullscreen.isActive : true"
+    >
       <q-fab :icon="icon.mdiPlus" direction="up" color="accent" :disable="isDragging">
         <q-fab-action @click="next" color="primary" :icon="icon.mdiArrowRight" :disable="isDragging">
           <q-tooltip transition-show="scale" transition-hide="scale" anchor="center left" self="center right">
@@ -63,7 +83,7 @@
           </q-tooltip>
         </q-fab-action>
         <q-fab-action
-          v-if="$q.fullscreen.isCapable && !readSetting['hideFullScreen']"
+          v-if="!readSetting['hideFullScreen']"
           @click="$q.fullscreen.toggle()"
           color="primary"
           :icon="$q.fullscreen.isActive ? icon.mdiFullscreenExit : icon.mdiFullscreen"
@@ -71,6 +91,27 @@
         >
           <q-tooltip transition-show="scale" transition-hide="scale" anchor="center left" self="center right">
             {{ $q.fullscreen.isActive ? '退出全屏' : '全屏' }}
+          </q-tooltip>
+        </q-fab-action>
+        <q-fab-action
+          v-if="readSetting['hideFloatingButtonSelectable']"
+          @click="floatingButtonVisible = false"
+          color="primary"
+          :icon="icon.mdiEyeOff"
+          :disable="isDragging"
+        >
+          <q-tooltip transition-show="scale" transition-hide="scale" anchor="center left" self="center right">
+            隐藏浮动按钮
+          </q-tooltip>
+        </q-fab-action>
+        <q-fab-action
+          @click="settingDialog = true"
+          color="primary"
+          :icon="icon.mdiCog"
+          :disable="isDragging"
+        >
+          <q-tooltip transition-show="scale" transition-hide="scale" anchor="center left" self="center right">
+            设置
           </q-tooltip>
         </q-fab-action>
         <q-fab-action
@@ -139,6 +180,7 @@ import { PROVIDE } from 'src/const/provide'
 import { onClickOutside } from '@vueuse/core'
 import DragPageSticky from 'components/DragPageSticky.vue'
 import { apiServer } from 'src/services/apiServer'
+import Setting from 'src/views/Setting.vue'
 
 const props = defineProps<{
   bid: string
@@ -165,10 +207,14 @@ const note = reactive({
   showing: false
 })
 const showCatalog = ref(false)
+const settingDialog = ref(false)
 const cid = computed(() => chapter.value?.Id || 1)
 const userId = computed(() => appStore.userId)
 const loading = computed(() => chapter.value?.BookId !== bid.value || chapter.value['SortNum'] !== sortNum.value)
 const chapterContent = computed(() => sanitizerHtml(chapter.value['Content']))
+
+// 由设置更改的选项
+const preview = ref(false)
 
 const getContent = useTimeoutFn(async () => {
   try {
@@ -183,10 +229,37 @@ const getContent = useTimeoutFn(async () => {
       color: 'purple',
       timeout: 1500
     })
+
     ;(async () => {
       if (res.ReadPosition && res.ReadPosition.Cid === res.Chapter.Id) {
         await delay(200)
         await nextTick(() => {
+          readSetting['fullScreenWhenReading'] && !$q.fullscreen.isActive && $q.fullscreen.request().catch(() => {
+            const eventMap = [
+              'mousedown',
+              'touch',
+              // 'scroll',
+              // 'focus'
+            ]
+            // Require user first interaction first
+            console.debug('Require user first interaction first', $q.fullscreen.isActive)
+            if ($q.fullscreen.isActive) return  // Somehow it's already fullscreen, ignore
+            const tryFullscreen = async () => {
+              // Remove all listeners
+              eventMap.forEach(event => document.removeEventListener(event, tryFullscreen))
+              // Try again
+              for (let i = 0; i < 3; i++) {
+                try {
+                  await $q.fullscreen.request()
+                  break
+                } catch {
+                  console.debug('Try again', i)
+                  await new Promise(resolve => setTimeout(resolve, 1000))
+                }
+              }
+            }
+            eventMap.forEach(event => window.addEventListener(event, tryFullscreen, { once: true }))
+          })
           scrollToHistory(readerRef.value.contentRef, res.ReadPosition.XPath, headerOffset)
         })
       }
@@ -228,6 +301,11 @@ const readStyle = computed(() => ({
     readSetting.bgType === 'custom' ? (colors.brightness(readSetting.customColor) < 128 ? '#fff' : '#000') : 'inherit'
 }))
 
+const floatingButtonVisible = ref(
+  !readSetting['hideFloatingButton'] ||
+  readSetting['hideFloatingButton'] !== 'always'
+)
+
 const router = useRouter()
 const next = debounce(() => {
   if (sortNum.value === chapter.value?.Chapters?.length) {
@@ -259,10 +337,13 @@ function back() {
 
 function manageKeydown(event: KeyboardEvent) {
   if (imagePreview.isShow) return // 显示图片时不予响应
-  if (event.code === 'ArrowRight') {
-    next()
-  } else if (event.code === 'ArrowLeft') {
-    prev()
+  switch (event.code) {
+    case 'ArrowRight':
+      next()
+      break
+    case 'ArrowLeft':
+      prev()
+      break
   }
 }
 
@@ -386,6 +467,8 @@ watch(
   & {
     all: unset;
     user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
   }
 
   @import '../../../css/read';
