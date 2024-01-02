@@ -258,6 +258,10 @@ function logout() {
     await rebootSignalr()
   })
 }
+
+// 侧边栏问题
+onBeforeUpdate(() => siderShow.value = false)
+watch(() => $q.fullscreen.isActive, () => siderShow.value = false)
 </script>
 
 <style lang="scss" scoped>
