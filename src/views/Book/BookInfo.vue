@@ -55,7 +55,7 @@
               <div style="margin-top: 24px">作者：{{ book['Author'] }}</div>
               <div>最后更新：{{ book['LastUpdate'] }}</div>
               <div>更新时间：{{ dateFormat(book['LastUpdateTime']) }} ({{ LastUpdateTimeDesc }})</div>
-              <div>上次阅读：{{ lastReadTitle }}</div>
+              <div v-if="lastReadTitle">上次阅读：{{ lastReadTitle }}</div>
               <div style="margin-top: 24px">
                 <div>简介</div>
                 <div class="introduction" v-html="sanitizerHtml(book['Introduction'])"></div>
@@ -201,7 +201,7 @@ const lastReadTitle = computed(() => {
     let chap = bookInfo.value?.Book?.Chapter?.find((x) => x.Id === position.value.cid)
     return chap?.Title
   }
-  return '暂无'
+  return ''
 })
 function dateFormat(time: Date) {
   return DateTime.fromJSDate(time).toFormat('yyyy-MM-dd hh:mm')
