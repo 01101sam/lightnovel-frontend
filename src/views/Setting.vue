@@ -86,6 +86,7 @@
               <div class="q-gutter-xs q-mt-md">
                 <div class="text-subtitle1">全屏</div>
                 <q-toggle v-model="readSetting.hideToolbarWhenFullScreen" label="全屏时隐藏工具栏" />
+                <q-toggle v-model="readSetting.hideToolbarWhenReading" label="阅读时隐藏工具栏" />
                 <q-toggle v-model="readSetting.fullScreenWhenReading" label="阅读时自动全屏" />
               </div>
               <q-separator />

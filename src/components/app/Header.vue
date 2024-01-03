@@ -4,7 +4,7 @@
     elevated
     :class="($q.dark.isActive ? 'bg-blue-grey-10' : '') + ' q-py-xs'"
     :height-hint="headerHeight"
-    v-if="readSetting['hideToolbarWhenFullScreen'] ? !$q.fullscreen.isActive : true"
+    v-if="readSetting['hideToolbarWhenFullScreen'] ? !$q.fullscreen.isActive : readSetting['hideToolbarWhenReading'] ? router.currentRoute.value.name !== 'Read' : true"
   >
     <q-toolbar>
       <q-btn flat dense round aria-label="Menu" :icon="icon.mdiMenu" @click="siderShow = !siderShow" />
