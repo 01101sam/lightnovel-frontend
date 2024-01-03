@@ -23,7 +23,7 @@ export const useSettingStore = defineStore('app.setting', {
       showButton: true,
       tapToScroll: false,
       hideFullScreen: false,
-      hideFloatingButton: 'never' as 'never' | 'fullscreen' | 'always',
+      hideFloatingButton: 'never' as 'never' | 'fullscreen' | 'reading' | 'always',
       hideFloatingButtonSelectable: false,
       hideToolbarWhenFullScreen: false,
       hideToolbarWhenReading: false,

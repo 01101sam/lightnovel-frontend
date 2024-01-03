@@ -196,6 +196,10 @@ const floatingBtnHideOpts: Array<Record<string, any>> = [
     value: 'fullscreen'
   },
   {
+    label: '阅读',
+    value: 'reading'
+  },
+  {
     label: '一直',
     value: 'always'
   }
