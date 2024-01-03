@@ -299,11 +299,6 @@ const readStyle = computed(() => ({
     readSetting.bgType === 'custom' ? (colors.brightness(readSetting.customColor) < 128 ? '#fff' : '#000') : 'inherit'
 }))
 
-const floatingButtonVisible = ref(
-  !readSetting['hideFloatingButton'] ||
-  readSetting['hideFloatingButton'] !== 'always'
-)
-
 const router = useRouter()
 const next = debounce(() => {
   if (sortNum.value === chapter.value?.Chapters?.length) {
@@ -329,9 +324,17 @@ const prev = debounce(() => {
     router.replace({ name: 'Read', params: { bid: bid.value, sortNum: sortNum.value - 1 } })
   }
 }, 300)
+
 function back() {
   router.push({ name: 'BookInfo', params: { bid: bid.value } })
 }
+
+const floatingButtonVisible = ref(
+  !readSetting['hideFloatingButton'] ||
+  readSetting['hideFloatingButton'] === 'never' ||
+  readSetting['hideFloatingButton'] === 'reading' && router.currentRoute.value.name !== 'Read' ||
+  readSetting['hideFloatingButton'] !== 'always'
+)
 
 function manageKeydown(event: KeyboardEvent) {
   if (imagePreview.isShow) return // 显示图片时不予响应
@@ -409,6 +412,7 @@ function showNote(event: MouseEvent, html: string, id: string) {
     note.showing = true
   }
 }
+
 if ($q.platform.is.mobile) {
   // 实际上是点不到 noteElement 里面的
   onClickOutside(noteElement, globalCancelShowing)
