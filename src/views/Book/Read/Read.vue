@@ -232,14 +232,12 @@ const getContent = useTimeoutFn(async () => {
 
     ;(async () => {
       if (res.ReadPosition && res.ReadPosition.Cid === res.Chapter.Id) {
-        await delay(200)
+        await delay(200)()
         await nextTick(() => {
           readSetting['fullScreenWhenReading'] && !$q.fullscreen.isActive && $q.fullscreen.request().catch(() => {
             const eventMap = [
               'mousedown',
-              'touch',
-              // 'scroll',
-              // 'focus'
+              'touch'
             ]
             // Require user first interaction first
             console.debug('Require user first interaction first', $q.fullscreen.isActive)
@@ -253,8 +251,8 @@ const getContent = useTimeoutFn(async () => {
                   await $q.fullscreen.request()
                   break
                 } catch {
-                  console.debug('Try again', i)
-                  await new Promise(resolve => setTimeout(resolve, 1000))
+                  console.debug('Retrying fullscreen', i)
+                  await delay(1000)()
                 }
               }
             }
